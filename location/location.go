@@ -7,85 +7,24 @@ import (
 
 	"math"
 
+	"github.com/mgironi/operation-fire-quasar/model"
+
+	"github.com/mgironi/operation-fire-quasar/store"
 	"github.com/montanaflynn/stats"
 )
 
-// Defines comparison tolerance between floats values.
-const FLOAT_COMPARISION_TOLERANCE float64 = 0.0001
-
-// Defines Point Struct with X and Y properties.
-type Point struct {
-	X float64
-	Y float64
-}
-
-// stringfy Point value properties.
-func (pt Point) String() string {
-	return fmt.Sprintf("(%f, %f)", pt.X, pt.Y)
-}
-
-// Calculates the distance from Point with ohter Point.
-// Uses the distance between two points formula d=sqrt((Xa-Xb)^2 + (Ya-Yb)^2).
-// Returns the distance.
-func (pt Point) DistanceToPoint(other Point) float64 {
-	return math.Sqrt(math.Pow(pt.X-other.X, 2) + math.Pow(pt.Y-other.Y, 2))
-}
-
-// Calculates the distance from Point with a coordinate x,y given in float32.
-// See also DistanceToPoint.
-// input: x and Y coordiantes in float32.
-// output: the distance.
-func (pt Point) DistanceToCoordinatesfloat32(x, y float32) float64 {
-	return pt.DistanceToPoint(Point{X: float64(x), Y: float64(y)})
-}
-
-// Calcualtes Point translation to a new referencePoint.
-// input: reference point to translate to.
-// output: the new Point with traslation.
-func (pt Point) TranslationTo(referencePoint Point) Point {
-	return Point{X: (pt.X - referencePoint.X), Y: pt.Y - referencePoint.Y}
-}
-
-// Rotates axes Point coordinates to a given axes rotation angle. Turn anticlockwise.
-// The coordinates rotation forumala are x'=x*cos(angle)+y*sin(angle) and y'=y*cos(angle)-x*sin(angle).
-// input: axes rotation angle in radians.
-// output: the new Point with rotation.
-func (pt Point) RotateAxesTo(axesRotationAngle float64) Point {
-	// calculates x using coordinates rotation formula. x'=x*cos(angle)+y*sin(angle).
-	x := pt.X*math.Cos(axesRotationAngle) + pt.Y*math.Sin(axesRotationAngle)
-
-	// calculate y using coordinates rotation formula. y'=y*cos(angle)-x*sin(angle).
-	y := pt.Y*math.Cos(axesRotationAngle) - pt.X*math.Sin(axesRotationAngle)
-
-	return Point{X: x, Y: y}
-}
-
-// Rotates axes Point coordinates to a given axes rotation angle with an inverse direction to RotateAxesTo. Turn clockwise.
-// The coordinates rotation inverse formula are x=x'*cos(angle)-y'*sin(angle) and y=y'*cos(angle)+x'*sin(angle).
-// input: axes rotation angle in radians.
-// output: the the new Point with inverse rotation.
-func (pt Point) InvertAxesRotationTo(axesRotationAngle float64) Point {
-	// calculates x with x=x'*cos(angle)-y'*sin(angle)
-	x := pt.X*math.Cos(axesRotationAngle) - pt.Y*math.Sin(axesRotationAngle)
-
-	// calculates y with y=y'*cos(angle)+x'*sin(angle)
-	y := pt.Y*math.Cos(axesRotationAngle) + pt.X*math.Sin(axesRotationAngle)
-
-	return Point{X: x, Y: y}
-}
-
-// Checks if Point is equal with other Point, compares property by property using a float comparision tolerance.
-// See also FLOAT_COMPARISION_TOLERANCE.
-// input: other point
-// output: true if equal otherwise false
-func (pt Point) EqualTo(otherPoint Point) bool {
-	diffX := math.Abs(pt.X - otherPoint.X)
-	isEqualX := diffX < FLOAT_COMPARISION_TOLERANCE
-
-	diffY := math.Abs(pt.Y - otherPoint.Y)
-	isEqualY := diffY < FLOAT_COMPARISION_TOLERANCE
-
-	return isEqualX && isEqualY
+// input: distance to the transmitter recieved on each satlelite
+// output: the coordinates 'x' and 'y' of the message emiter
+func GetLocation(distances ...float32) (x, y float32) {
+	if len(distances) < 3 {
+		log.Printf("Is not possible to compelete calculations. There is not enough distances values as parameter to determine location. At least 3 distances are required ")
+	}
+	var err error
+	x, y, err = CalculateLocation(distances)
+	if err != nil {
+		log.Printf("Is no possible to compelete calculations. %s", err.Error())
+	}
+	return x, y
 }
 
 // Calculates coordinates location.
@@ -113,7 +52,7 @@ func CalculateLocation(distances []float32) (x, y float32, err error) {
 	}
 
 	// checks if ratioError is acceptable with float comparission tolerance
-	acceptedRatio := FLOAT_COMPARISION_TOLERANCE
+	acceptedRatio := model.FLOAT_COMPARISION_TOLERANCE
 	if ratioErr > acceptedRatio {
 		log.Printf("WARN ratio error exceeds aceptable level of %.4f. Ratio ~ %.4f", acceptedRatio, ratioErr)
 	}
@@ -121,8 +60,15 @@ func CalculateLocation(distances []float32) (x, y float32, err error) {
 }
 
 // Routput: the kwnown reference coordinates.
-func GetKnownReferenceCoordinates() []Point {
-	return []Point{{X: -500, Y: -200}, {X: 100, Y: -100}, {X: 500, Y: 100}}
+func GetKnownReferenceCoordinates() (points []model.Point) {
+	if len(store.Satelites) == 0 {
+		store.InitializeSatelitesInfo()
+	}
+	points = make([]model.Point, len(store.Satelites))
+	for i, satelite := range store.Satelites {
+		points[i] = satelite.Location
+	}
+	return points
 }
 
 // Checks if the X, Y coordinates distance to each pointsCoordinates matchs with the given distances.
@@ -130,7 +76,7 @@ func GetKnownReferenceCoordinates() []Point {
 // output: the median errorRatio calculated (0: no error, interval [0,1]: percent error)
 // error1: if detects arrays length diferences (between distances and points coordinates)
 // error2: an internal calculation error.
-func ChecksDistancesToCoordinate(distances []float32, pointsCoordinates []Point, x, y float32) (errorRatio float64, err error) {
+func ChecksDistancesToCoordinate(distances []float32, pointsCoordinates []model.Point, x, y float32) (errorRatio float64, err error) {
 	// checks arrays length, they must be equals
 	if len(distances) != len(pointsCoordinates) {
 		return 0, fmt.Errorf("can't check distances with coordinate. Distances and Points coordinates has diferent sizes. Distances: %d, PointsCoord: %d", len(distances), len(pointsCoordinates))
@@ -147,11 +93,42 @@ func ChecksDistancesToCoordinate(distances []float32, pointsCoordinates []Point,
 	// calculate median of the ratios list
 	errorRatio, err = stats.Median(ratios)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error calculating median erro ratio. Ratios: %v.\n\tTrace: %s", ratios, err.Error())
 	}
 	// adjust ratio value
 	errorRatio = errorRatio - 1
 	return errorRatio, err
+}
+
+func HasTorableDiffByDynamicScale(a float64, b float64, toleranceDiffRatio float64) bool {
+
+	// check if are equals
+	if a == b {
+		return true
+	}
+
+	// calculates diff in absolute values
+	absA := math.Abs(a)
+	absB := math.Abs(b)
+
+	// if A and B has the same sign then Diff is a subtraction
+	diff := math.Abs(absA - absB)
+
+	if (a >= 0 && b < 0) || (a < 0 && b >= 0) {
+		// if A and B has diferent sign then Diff is an addition
+		diff = absA + absB
+	}
+
+	// use A as refence value to calcuate diff ratio
+	denominator := absA
+
+	if denominator == 0 {
+		// Prevent divide by 0 (zero)
+		denominator = absB
+	}
+
+	// evaluates if the Difference is bigger than A or the relation is smaller or equal to the toletared ratio
+	return diff < absA && (diff/denominator) <= toleranceDiffRatio
 }
 
 //
@@ -181,7 +158,7 @@ func ChecksDistancesToCoordinate(distances []float32, pointsCoordinates []Point,
 // output: x and y calculated location coordinates
 //
 // For more information please see https://en.wikipedia.org/wiki/True-range_multilateration#Three_Cartesian_dimensions.2C_three_measured_slant_ranges
-func CalculateLocationByTrilateration(distances []float32, pointsCoodrinates []Point) (x, y float32) {
+func CalculateLocationByTrilateration(distances []float32, pointsCoodrinates []model.Point) (x, y float32) {
 	// get distances as radius from each point converted to float64 to use math library
 	radiusP1 := float64(distances[0])
 	radiusP2 := float64(distances[1])
@@ -211,7 +188,7 @@ func CalculateLocationByTrilateration(distances []float32, pointsCoodrinates []P
 	i := p32ndPrime.X
 	j := p32ndPrime.Y
 
-	var resultTrilateralation Point
+	var resultTrilateralation model.Point
 
 	// calculate X coordinate
 	xNumerator := math.Pow(radiusP1, 2) - math.Pow(radiusP2, 2) + math.Pow(d, 2)

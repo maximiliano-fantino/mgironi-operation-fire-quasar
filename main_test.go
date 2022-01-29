@@ -1,47 +1,46 @@
 package main
 
 import (
-	"math"
+	"reflect"
 	"testing"
 
 	"os"
 
-	"github.com/mgironi/operation-fire-quasar/location"
+	test "github.com/mgironi/operation-fire-quasar/_test"
 )
 
 func TestMain(t *testing.T) {
 	oldsArgs := os.Args
-	os.Args = []string{"cmd", "-distances=500,424.26,707.10"}
+	os.Args = []string{"cmd", "-distances=500,424.26,707.10", "-messages=this..the.complete.message,.is.the..message,.is...message"}
 	main()
 	os.Args = oldsArgs
 }
 
 func TestParseArgs(t *testing.T) {
 	oldsArgs := os.Args
-	os.Args = []string{"cmd", "-distances=500,424.26,707.10"}
-	wantedLength := 3
-	wantedValues := []float32{500, 424.26, 707.10}
+	os.Args = []string{"cmd", "-distances=500,424.26,707.10", "-messages=this..the.complete.message,.is.the..message,.is...message"}
+	wantedDistances := []float32{500, 424.26, 707.10}
+	wantedMessages := [][]string{
+		{"this", "", "the", "complete", "message"},
+		{"", "is", "the", "", "message"},
+		{"", "is", "", "", "message"},
+	}
 
 	distances, messages, err := ParseArgs()
 
 	if err != nil {
-		t.Fatalf("Error parsing args %e", err)
+		t.Errorf("Error parsing args %e", err)
 	}
-	if len(distances) != wantedLength {
-		t.Fatalf("Error parsing distances args length is %d, wanted %d", len(distances), wantedLength)
+	if len(distances) != len(wantedDistances) {
+		t.Errorf("Error parsing distances args length is %d, wanted %d", len(distances), len(wantedDistances))
 	}
-	for i, wantedVal := range wantedValues {
-		if !areEquals(wantedVal, distances[i]) {
-			t.Fatalf("Error parsing distances args value in list position %d is %f, wanted %f", i, distances[i], wantedVal)
+	for i, wantedVal := range wantedDistances {
+		if !test.AreFloatsEquals(float64(wantedVal), float64(distances[i])) {
+			t.Errorf("Error parsing distances args value in list position %d is %f, wanted %f", i, distances[i], wantedVal)
 		}
 	}
-	if len(messages) != 0 {
-		t.Fatal("Messages spected empty")
+	if !reflect.DeepEqual(messages, wantedMessages) {
+		t.Errorf("Slices are diferent.\ncalc: %v\nwant: %v", messages, wantedMessages)
 	}
 	os.Args = oldsArgs
-}
-
-func areEquals(a float32, b float32) bool {
-	diff := math.Abs(float64(a) - float64(b))
-	return diff < location.FLOAT_COMPARISION_TOLERANCE
 }
