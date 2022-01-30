@@ -51,7 +51,7 @@ func ConsolidateMessage(messages [][]string) (completeMessage string, err error)
 				// compies word to fullMessage
 				fullMessage[j] = messages[i][j]
 			} else if (len(fullMessage[j]) > 0 && len(messages[i][j]) > 0) && (fullMessage[j] != messages[i][j]) {
-				return completeMessage, fmt.Errorf("the words at position %d mismatch between full an partial messages. Has %s and in teh partial message is %s", j, fullMessage[j], messages[i][j])
+				return completeMessage, fmt.Errorf("the words at position %d mismatch between full an partial messages. Is '%s' and in the partial message is '%s'", j, fullMessage[j], messages[i][j])
 			}
 		}
 	}

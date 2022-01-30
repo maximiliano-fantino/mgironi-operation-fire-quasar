@@ -1,0 +1,9 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: operation-fire-quasar-srv
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/mlchallenge-338620/github.com/mgironi/operation-fire-quasar:latest

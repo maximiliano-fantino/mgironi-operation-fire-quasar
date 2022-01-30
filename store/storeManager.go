@@ -11,7 +11,7 @@ import (
 )
 
 // Satelites global variable
-var Satelites map[int]model.SateliteInfo
+var satelites map[int]model.SateliteInfo
 
 // Initialices in memory store
 func Initialize() {
@@ -39,7 +39,7 @@ func InitializeSatelitesInfo() {
 
 	// initialices satelites map
 	var hasErrors bool
-	Satelites, hasErrors = ParseSatelitesInfoFromEnvs(satelitesEnvsKeys)
+	satelites, hasErrors = ParseSatelitesInfoFromEnvs(satelitesEnvsKeys)
 
 	// checks for parsing errors
 	if hasErrors {
@@ -53,11 +53,55 @@ func LoadsDefaultSatelitesInfo() {
 	log.Printf("\nContinue loading default Satelites information ...")
 
 	// loads default satelites info
-	Satelites = map[int]model.SateliteInfo{
+	satelites = map[int]model.SateliteInfo{
 		0: {Name: "kenobi", Location: model.Point{X: -500, Y: -200}},
 		1: {Name: "skywalker", Location: model.Point{X: 100, Y: -100}},
 		2: {Name: "sato", Location: model.Point{X: 500, Y: 100}},
 	}
+}
+
+func GetSatellitesInfo() (satelliteList []model.SateliteInfo) {
+	satelliteList = make([]model.SateliteInfo, len(satelites))
+	satelliteCount := len(satelites)
+	for i := 0; i < satelliteCount; i++ {
+		satelliteList[i] = satelites[i]
+	}
+	return satelliteList
+}
+
+// Routput: the kwnown reference coordinates.
+func GetKnownReferenceCoordinates() (points []model.Point) {
+	checksAndInitialicesSatellitesInfo()
+	points = make([]model.Point, len(satelites))
+	for i, satelite := range satelites {
+		points[i] = satelite.Location
+	}
+	return points
+}
+
+func GetSatellitesInfoCount() int {
+	checksAndInitialicesSatellitesInfo()
+	return len(satelites)
+}
+
+func checksAndInitialicesSatellitesInfo() {
+	if len(satelites) == 0 {
+		InitializeSatelitesInfo()
+	}
+}
+
+// input: satellite ;name'
+// output: the satellite info index in store. Returns -1 if 'name' not present
+func GetSatelliteInfoIndex(name string) (index int) {
+	checksAndInitialicesSatellitesInfo()
+
+	for i, satInfo := range satelites {
+		if satInfo.Name == name {
+			index = i
+			return i
+		}
+	}
+	return -1
 }
 
 // Parses satelites info from environment variables

@@ -1,6 +1,7 @@
 package location
 
 import (
+	"errors"
 	"fmt"
 
 	"log"
@@ -8,8 +9,8 @@ import (
 	"math"
 
 	"github.com/mgironi/operation-fire-quasar/model"
-
 	"github.com/mgironi/operation-fire-quasar/store"
+
 	"github.com/montanaflynn/stats"
 )
 
@@ -34,7 +35,7 @@ func GetLocation(distances ...float32) (x, y float32) {
 func CalculateLocation(distances []float32) (x, y float32, err error) {
 
 	// gets reference points coordinates
-	pointsCoordinates := GetKnownReferenceCoordinates()
+	pointsCoordinates := store.GetKnownReferenceCoordinates()
 
 	// checks if distances has same amount of elements that the refences points coordiantes.
 	if len(distances) != len(pointsCoordinates) {
@@ -52,23 +53,13 @@ func CalculateLocation(distances []float32) (x, y float32, err error) {
 	}
 
 	// checks if ratioError is acceptable with float comparission tolerance
-	acceptedRatio := model.FLOAT_COMPARISION_TOLERANCE
+	acceptedRatio := 10 * model.FLOAT_COMPARISION_TOLERANCE
 	if ratioErr > acceptedRatio {
-		log.Printf("WARN ratio error exceeds aceptable level of %.4f. Ratio ~ %.4f", acceptedRatio, ratioErr)
+		errMsg := fmt.Sprintf("ratio error exceeds acceptable level of %.4f. Ratio ~ %.4f", acceptedRatio, ratioErr)
+		log.Printf("WARN %s", errMsg)
+		return 0, 0, errors.New(errMsg)
 	}
 	return x, y, nil
-}
-
-// Routput: the kwnown reference coordinates.
-func GetKnownReferenceCoordinates() (points []model.Point) {
-	if len(store.Satelites) == 0 {
-		store.InitializeSatelitesInfo()
-	}
-	points = make([]model.Point, len(store.Satelites))
-	for i, satelite := range store.Satelites {
-		points[i] = satelite.Location
-	}
-	return points
 }
 
 // Checks if the X, Y coordinates distance to each pointsCoordinates matchs with the given distances.

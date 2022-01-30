@@ -46,6 +46,21 @@ func AskForHelp() (askedForHelp bool) {
 	return askedForHelp
 }
 
+// Searchs the command args to detect if web server profile is present
+func IsProfileServerArgPresent() (isPresent bool) {
+	cmdArgs := os.Args
+	serverArgRegex := regexp.MustCompile(`-profile=server`)
+	isPresent = false
+	for _, arg := range cmdArgs {
+		if serverArgRegex.MatchString(arg) {
+			isPresent = true
+			return
+		}
+	}
+	return
+}
+
+// Parses command args to get distances and messages list
 func ParseArgs() (distances []float32, messages [][]string, err error) {
 	cmdArgs := os.Args
 	distancesArgRegex := regexp.MustCompile(`\bdistances\b`)

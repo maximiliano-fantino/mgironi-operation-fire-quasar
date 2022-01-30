@@ -6,11 +6,37 @@ import (
 	"github.com/mgironi/operation-fire-quasar/location"
 	"github.com/mgironi/operation-fire-quasar/message"
 	"github.com/mgironi/operation-fire-quasar/store"
+	"github.com/mgironi/operation-fire-quasar/web"
 )
 
 func main() {
 	log.SetFlags(0)
 
+	// check for run profile
+	if isAskingToRunAsWebServer() {
+		// Runs as as a web server
+		RunAsWebServer()
+	} else {
+		// Runs as simple cmd execution
+		RunAsSimpleCmdExecution()
+	}
+
+}
+
+func isAskingToRunAsWebServer() (isAsking bool) {
+	return IsProfileServerArgPresent()
+}
+
+func RunAsWebServer() {
+	// initialize web server
+	web.InitializeServer()
+
+	// initialices the store (in memory)
+	store.Initialize()
+
+}
+
+func RunAsSimpleCmdExecution() {
 	// checks and console display, if only asked for help menu/instructions
 	if AskForHelp() {
 		return

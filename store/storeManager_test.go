@@ -6,25 +6,37 @@ import (
 	"reflect"
 	"testing"
 
+	test "github.com/mgironi/operation-fire-quasar/_test"
 	"github.com/mgironi/operation-fire-quasar/model"
 	"github.com/mgironi/operation-fire-quasar/store"
-
-	test "github.com/mgironi/operation-fire-quasar/_test"
 )
 
 func TestInitializeSatelitesInfo(t *testing.T) {
 	test.CleanSatelitesInfoEnvs()
 
 	store.InitializeSatelitesInfo()
-
-	wanted := map[int]model.SateliteInfo{
-		0: {Name: "kenobi", Location: model.Point{X: -500, Y: -200}},
-		1: {Name: "skywalker", Location: model.Point{X: 100, Y: -100}},
-		2: {Name: "sato", Location: model.Point{X: 500, Y: 100}},
+	wantCount := 3
+	want := []model.SateliteInfo{
+		{Name: "kenobi", Location: model.Point{X: -500, Y: -200}},
+		{Name: "skywalker", Location: model.Point{X: 100, Y: -100}},
+		{Name: "sato", Location: model.Point{X: 500, Y: 100}},
+	}
+	gotCount := store.GetSatellitesInfoCount()
+	if gotCount != wantCount {
+		t.Errorf("Satelites default info size don't match. got: %d, wanted: %d.", gotCount, wantCount)
 	}
 
-	if !reflect.DeepEqual(store.Satelites, wanted) {
-		t.Errorf("Satelites default info don't match. Is %v, wanted %v", store.Satelites, wanted)
+	got := store.GetSatellitesInfo()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Satelites default info don't match.\n---Is:\n%v\n---wanted:\n%v\n", got, want)
+	}
+}
+
+func TestGetKnownReferenceCoordinates(t *testing.T) {
+	want := []model.Point{{X: -500, Y: -200}, {X: 100, Y: -100}, {X: 500, Y: 100}}
+	got := store.GetKnownReferenceCoordinates()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Test GetKnownReferenceCoordinates() mismatch.\n---got:\n%v\n---want:\n%v\n", got, want)
 	}
 }
 
@@ -79,5 +91,28 @@ func TestConvertSateliteInfo(t *testing.T) {
 	}
 	if !test.AreFloatsEquals(satInfo.Location.Y, wantedCoordY) {
 		t.Errorf("Location Y mismatch. Is %f, wanted %f, ", satInfo.Location.Y, wantedCoordY)
+	}
+}
+
+func TestGetSatelliteInfoIndex(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		wantIndex int
+	}{
+		{name: "test1", args: args{name: ""}, wantIndex: -1},
+		{name: "test2", args: args{name: "any"}, wantIndex: -1},
+		{name: "test3", args: args{name: "kenobi"}, wantIndex: 0},
+		{name: "test4", args: args{name: "skywalker"}, wantIndex: 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotIndex := store.GetSatelliteInfoIndex(tt.args.name); gotIndex != tt.wantIndex {
+				t.Errorf("GetSatelliteInfoIndex() = %v, want %v", gotIndex, tt.wantIndex)
+			}
+		})
 	}
 }

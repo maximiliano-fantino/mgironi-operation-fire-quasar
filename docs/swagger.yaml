@@ -1,0 +1,67 @@
+definitions:
+  model.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.SatelliteInfoRequest:
+    properties:
+      distance:
+        type: number
+      message:
+        items:
+          type: string
+        type: array
+      name:
+        example: kenobi
+        type: string
+    type: object
+  model.TopSecretRequest:
+    properties:
+      satellites:
+        items:
+          $ref: '#/definitions/model.SatelliteInfoRequest'
+        type: array
+    type: object
+info:
+  contact: {}
+paths:
+  /ping/:
+    get:
+      description: response ping
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: ping
+      tags:
+      - example
+  /topsecret/:
+    post:
+      consumes:
+      - application/json
+      description: Basado en las distancias y mensajes que se reciben de cada satelite,
+        se obtienen la posicion y el mensaje emitido.
+      parameters:
+      - description: The disantes and messages recieved from each satellite
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/model.TopSecretRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TopSecretRequest'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Obtiene la ubicación de la nave y el mensaje que emite.
+swagger: "2.0"
