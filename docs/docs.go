@@ -86,7 +86,8 @@ var doc = `{
             "type": "object",
             "properties": {
                 "error": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "this is an error message description"
                 }
             }
         },
@@ -94,13 +95,21 @@ var doc = `{
             "type": "object",
             "properties": {
                 "distance": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 100.23
                 },
                 "message": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "",
+                        "is",
+                        "a",
+                        "",
+                        "message"
+                    ]
                 },
                 "name": {
                     "type": "string",

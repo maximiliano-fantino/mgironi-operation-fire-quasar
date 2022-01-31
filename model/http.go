@@ -11,9 +11,9 @@ type TopSecretResponse struct {
 }
 
 type SatelliteInfoRequest struct {
-	Name     string   `json:"name"`
-	Distance float32  `json:"distance"`
-	Message  []string `json:"message"`
+	Name     string   `json:"name" example:"kenobi"`
+	Distance float32  `json:"distance" example:"100.23"`
+	Message  []string `json:"message" example:",is,a,,message"`
 }
 
 type TopSecretRequest struct {
@@ -21,5 +21,5 @@ type TopSecretRequest struct {
 }
 
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error string `json:"error" example:"this is an error message description"`
 }

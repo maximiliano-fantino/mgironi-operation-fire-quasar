@@ -2,13 +2,21 @@ definitions:
   model.ErrorResponse:
     properties:
       error:
+        example: this is an error message description
         type: string
     type: object
   model.SatelliteInfoRequest:
     properties:
       distance:
+        example: 100.23
         type: number
       message:
+        example:
+        - ""
+        - is
+        - a
+        - ""
+        - message
         items:
           type: string
         type: array
