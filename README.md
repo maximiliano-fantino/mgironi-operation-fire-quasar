@@ -14,7 +14,9 @@ Tanto el entorno de desarrollo como ejecucion se uso *linux/unix*
 
 Para el entorno local se puede usar (aparte de las tools propias de go) el Dockerfile para permitir el build de la imagen local y tambien docker-compose (en modo servidor web). La imagen de docker generada es similar la misma que se utiliza en el despliegue en entorno del proveedor cloud elegido. 
 
-La solucion cloud que se uso para disponibilizar el servicio es *Google Run* de Google Cloud Platform. El servicio operation-fire-quasar esta conectado/configurado con el repositorio de github para hacer el build y deploy automatico, segun los eventos configurados. (ver diagrama/esquema orientativo)
+La solucion cloud que se uso para disponibilizar el servicio es *Google Run* de Google Cloud Platform. El servicio operation-fire-quasar esta conectado/configurado con el repositorio de github para hacer el build y deploy automatico, segun los eventos configurados. Ver el siguiente diagrama orientativo
+
+![gcloud_n3_implementation](https://user-images.githubusercontent.com/40694446/151864237-12bb0fb8-32c0-4fbc-bb28-a0e3b4e3dbda.png)
 
 # documentacion 
 
