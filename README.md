@@ -16,7 +16,9 @@ Para el entorno local se puede usar (aparte de las tools propias de go) el Docke
 
 La solucion cloud que se uso para disponibilizar el servicio es *Google Run* de Google Cloud Platform. El servicio operation-fire-quasar esta conectado/configurado con el repositorio de github para hacer el build y deploy automatico, segun los eventos configurados. Ver el siguiente diagrama orientativo
 
-![gcloud_n3_implementation](https://user-images.githubusercontent.com/40694446/151864237-12bb0fb8-32c0-4fbc-bb28-a0e3b4e3dbda.png)
+<p align="center">
+<img src="https://user-images.githubusercontent.com/40694446/151864237-12bb0fb8-32c0-4fbc-bb28-a0e3b4e3dbda.png"
+</p>
 
 # documentacion 
 
