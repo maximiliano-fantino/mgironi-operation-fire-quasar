@@ -105,7 +105,7 @@ func TreatSatellitesData(satellitesData []model.SatelliteInfoRequest) (distances
 }
 
 // @BasePath /
-// @Summary Recibe la distancia de la nave y el mensaje que recibido por un satelite.
+// @Summary Colecta la distancia de la nave y el mensaje que fue recibido por un satelite.
 // @Description Recibe la distancia y mensaje que recibe un satelite y devuelve el token de operacion para posterior tratamiento.
 // @Param operation path string false "El token de operacion"
 // @Param Body body model.TopSecretSplitRequest true "La distancia y el mensaje recibido por un satelite"
@@ -117,6 +117,12 @@ func TreatSatellitesData(satellitesData []model.SatelliteInfoRequest) (distances
 func TopSecretSplitPOSTHandler(c *gin.Context) {
 	// get operation token
 	operation := strings.TrimSpace(c.Param("operation"))
+
+	// be safe from swagger errors
+	if operation == "{operation}" || operation == "undefined" {
+		//clean param
+		operation = ""
+	}
 
 	var requestData model.SatelliteInfoRequest
 
@@ -204,8 +210,8 @@ func validateSatelliteInfoRequestData(requestData model.SatelliteInfoRequest) (i
 }
 
 // @BasePath /
-// @Summary Recibe el token correspondiente a la operacion de colleccion de datos de distancias y mensajes enviados a /TopSecretSplit/ previamente.
-// @Description Recibe el token de operacion y con el set de datos previamente recolectado basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.
+// @Summary Obtiene la ubicacion de la nave y el mensaje que emite.
+// @Description Recibe el token de operacion y con el set de datos previamente recolectado, basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.
 // @Param operation path string true "El token de operacion"
 // @Produce json
 // @Failure 404 {object} model.ErrorResponse

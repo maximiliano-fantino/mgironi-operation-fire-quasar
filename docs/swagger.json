@@ -63,11 +63,11 @@
         },
         "/topsecret_split/{operation}": {
             "get": {
-                "description": "Recibe el token de operacion y con el set de datos previamente recolectado basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.",
+                "description": "Recibe el token de operacion y con el set de datos previamente recolectado, basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Recibe el token correspondiente a la operacion de colleccion de datos de distancias y mensajes enviados a /TopSecretSplit/ previamente.",
+                "summary": "Obtiene la ubicacion de la nave y el mensaje que emite.",
                 "parameters": [
                     {
                         "type": "string",
@@ -100,7 +100,7 @@
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Recibe la distancia de la nave y el mensaje que recibido por un satelite.",
+                "summary": "Colecta la distancia de la nave y el mensaje que fue recibido por un satelite.",
                 "parameters": [
                     {
                         "type": "string",
