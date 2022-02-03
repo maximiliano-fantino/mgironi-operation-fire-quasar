@@ -36,6 +36,7 @@ func PingHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Failure 404 {object} model.ErrorResponse
+// @Failure 400 {object} model.ErrorResponse
 // @Success 200 {object} model.TopSecretRequest
 // @Router /topsecret/ [POST]
 func TopSecretHandler(c *gin.Context) {
@@ -112,6 +113,8 @@ func TreatSatellitesData(satellitesData []model.SatelliteInfoRequest) (distances
 // @Accept json
 // @Produce json
 // @Failure 404 {object} model.ErrorResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
 // @Success 200 {object} model.TopSecretSplitPOSTResponse
 // @Router /topsecret_split/{operation} [POST]
 func TopSecretSplitPOSTHandler(c *gin.Context) {
@@ -131,7 +134,7 @@ func TopSecretSplitPOSTHandler(c *gin.Context) {
 	if err != nil {
 		log.Printf("Error binding json. Trace: %s", err.Error())
 
-		// if data not ok, send response 404
+		// if data not ok, send response 400
 		c.IndentedJSON(http.StatusBadRequest, model.ErrorResponse{Message: "malformed json."})
 		return
 	}
@@ -160,6 +163,13 @@ func TopSecretSplitPOSTHandler(c *gin.Context) {
 			c.IndentedJSON(http.StatusInternalServerError, model.ErrorResponse{Message: "Can't save data."})
 			return
 		}
+		return
+	}
+
+	if satelliteDataAlreadyExists(requestData, savedDataset) {
+		log.Printf("WARN satellite data already exists in datasset: '%s' for operation: '%s'", requestData.Name, savedDataset.Operation)
+		response := model.TopSecretSplitPOSTResponse{Operation: operation}
+		c.IndentedJSON(http.StatusOK, response)
 		return
 	}
 
@@ -197,6 +207,17 @@ func TopSecretSplitPOSTHandler(c *gin.Context) {
 	}
 	response := model.TopSecretSplitPOSTResponse{Operation: operation}
 	c.IndentedJSON(http.StatusOK, response)
+}
+
+func satelliteDataAlreadyExists(requestData model.SatelliteInfoRequest, dataset model.Dataset) (exists bool) {
+	exists = false
+	for _, satData := range dataset.Satellites {
+		if satData.Name == requestData.Name {
+			exists = true
+			break
+		}
+	}
+	return
 }
 
 func validateSatelliteInfoRequestData(requestData model.SatelliteInfoRequest) (isValid bool, validationErrors string) {
