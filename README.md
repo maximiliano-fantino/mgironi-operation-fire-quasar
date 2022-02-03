@@ -2,7 +2,11 @@
 
 El programa retorna la fuente y contenido del mensaje de auxilio. El mismo puede ser ejecutado en modo programa comando o en modo servidor web. En el caso del modo servidor web el servicio puede ser consumido via api rest.
 
-última versión v3.0.0
+URL: https://operation-fire-quasar-srv-lr7wlwx33q-ue.a.run.app/swagger/index.html
+
+versión actual v3.0.0
+
+_(con el objeto de facilitar la evaluacion el acceso al servidor es publico)_
 
 # stack tecnologico
 
