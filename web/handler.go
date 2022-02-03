@@ -2,7 +2,9 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mgironi/operation-fire-quasar/location"
@@ -28,9 +30,9 @@ func PingHandler(c *gin.Context) {
 }
 
 // @BasePath /
-// @Summary Obtiene la ubicación de la nave y el mensaje que emite.
+// @Summary Obtiene la ubicacion de la nave y el mensaje que emite.
 // @Description Basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.
-// @Param Body body model.TopSecretRequest true "The disantes and messages recieved from each satellite"
+// @Param Body body model.TopSecretRequest true "Las distancias y mensajes recibidos por los satelites"
 // @Accept json
 // @Produce json
 // @Failure 404 {object} model.ErrorResponse
@@ -43,29 +45,34 @@ func TopSecretHandler(c *gin.Context) {
 	err := c.ShouldBindJSON(&requestData)
 	if err != nil {
 		log.Printf("Error binding json. Trace: %s", err.Error())
-		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Error: "Error binding JSON."})
+		c.IndentedJSON(http.StatusBadRequest, model.ErrorResponse{Message: "malformed json."})
 		return
 	}
 
+	// performs calculations, checks and response data
+	DoCalculationsAndResponse("TopSecretHandler", requestData.Satellites, c)
+}
+
+func DoCalculationsAndResponse(handlerName string, satellitesData []model.SatelliteInfoRequest, c *gin.Context) {
 	// treat request data to lists calculation form
-	distances, messages, treatErr := TreatRequestData(requestData)
+	distances, messages, treatErr := TreatSatellitesData(satellitesData)
 	if treatErr != nil {
-		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Error: treatErr.Error()})
+		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Message: treatErr.Error()})
 		return
 	}
 
 	// calculates location
 	x, y, locErr := location.CalculateLocation(distances)
 	if locErr != nil {
-		log.Printf("TopSecretHandler error with calculate location. Trace: %s", locErr.Error())
-		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Error: "Can't calculate location. Please check distances."})
+		log.Printf("%s error with calculate location. Trace: %s", handlerName, locErr.Error())
+		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Message: "Can't calculate location. Please check distances."})
 		return
 	}
 
 	message, msgsErr := message.ConsolidateMessage(messages)
 	if msgsErr != nil {
-		log.Printf("TopSecretHandler error with consolidate message. Trace: %s", msgsErr.Error())
-		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Error: msgsErr.Error()})
+		log.Printf("%s error with consolidate message. Trace: %s", handlerName, msgsErr.Error())
+		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Message: msgsErr.Error()})
 		return
 	}
 
@@ -76,15 +83,15 @@ func TopSecretHandler(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, rspData)
 }
 
-func TreatRequestData(requestData model.TopSecretRequest) (distances []float32, messages [][]string, err error) {
+func TreatSatellitesData(satellitesData []model.SatelliteInfoRequest) (distances []float32, messages [][]string, err error) {
 	satellitesCount := store.GetSatellitesInfoCount()
-	if len(requestData.Satellites) < satellitesCount {
-		log.Printf("Insufficient request data. Satelites distances: %d, need at least %d", len(requestData.Satellites), satellitesCount)
+	if len(satellitesData) < satellitesCount {
+		log.Printf("Insufficient request data. Satelites distances: %d, need at least %d", len(satellitesData), satellitesCount)
 		return distances, messages, errors.New("insufficient request data")
 	}
 	distances = make([]float32, satellitesCount)
 	messages = make([][]string, satellitesCount)
-	for _, rqSatelliteInfo := range requestData.Satellites {
+	for _, rqSatelliteInfo := range satellitesData {
 		// gets index synchronized satellite info
 		satIdx := store.GetSatelliteInfoIndex(rqSatelliteInfo.Name)
 
@@ -97,6 +104,130 @@ func TreatRequestData(requestData model.TopSecretRequest) (distances []float32, 
 	return distances, messages, nil
 }
 
-func TopSecretSplitHandler(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "")
+// @BasePath /
+// @Summary Recibe la distancia de la nave y el mensaje que recibido por un satelite.
+// @Description Recibe la distancia y mensaje que recibe un satelite y devuelve el token de operacion para posterior tratamiento.
+// @Param operation path string false "El token de operacion"
+// @Param Body body model.TopSecretSplitRequest true "La distancia y el mensaje recibido por un satelite"
+// @Accept json
+// @Produce json
+// @Failure 404 {object} model.ErrorResponse
+// @Success 200 {object} model.TopSecretSplitPOSTResponse
+// @Router /topsecret_split/{operation} [POST]
+func TopSecretSplitPOSTHandler(c *gin.Context) {
+	// get operation token
+	operation := strings.TrimSpace(c.Param("operation"))
+
+	var requestData model.SatelliteInfoRequest
+
+	// parse json to struct
+	err := c.ShouldBindJSON(&requestData)
+	if err != nil {
+		log.Printf("Error binding json. Trace: %s", err.Error())
+
+		// if data not ok, send response 404
+		c.IndentedJSON(http.StatusBadRequest, model.ErrorResponse{Message: "malformed json."})
+		return
+	}
+
+	isValid, errMsgStr := validateSatelliteInfoRequestData(requestData)
+	if !isValid {
+		log.Printf("Error data is incomplete. Data: %v. Trace: %s", requestData, errMsgStr)
+
+		// if data not ok, send response 404
+		c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Message: errMsgStr})
+		return
+	}
+
+	savedDataset := store.GetDataset(operation, requestData.Message)
+	if savedDataset.Key == "" {
+		// get operation token
+		operation = store.GetNewOperationUUID()
+
+		// initialize dataset
+		saved := store.SaveNewDataset(operation, requestData)
+		if saved {
+			response := model.TopSecretSplitPOSTResponse{Operation: operation}
+			c.IndentedJSON(http.StatusOK, response)
+		} else {
+			log.Printf("Error in save new dataset. unsaved operacion: %s, request data:%v", operation, requestData)
+			c.IndentedJSON(http.StatusInternalServerError, model.ErrorResponse{Message: "Can't save data."})
+			return
+		}
+		return
+	}
+
+	countData := len(savedDataset.Satellites) + 1
+
+	consolidatedMessage := ""
+
+	// checks if dataset is completed with new data
+	if countData < store.GetSatellitesInfoCount() {
+		// dataset is incomplete, consolidate partial message with data that have
+		messages := [][]string{}
+		for _, satData := range savedDataset.Satellites {
+			messages = append(messages, satData.Message)
+		}
+		messages = append(messages, requestData.Message)
+
+		// gets consolidated message
+		var consErr error
+		consolidatedMessage, consErr = message.ConsolidateMessage(messages)
+		if consErr != nil {
+			c.IndentedJSON(http.StatusNotFound, model.ErrorResponse{Message: "Can't consolidate message."})
+			return
+		}
+	}
+
+	// update dataset
+	updated := store.UpdateDataset(operation, consolidatedMessage, savedDataset.Key, requestData)
+	if !updated {
+		log.Printf("Error in update dataset. operacion: %s, message: %s, previous key: %s, request data:%v", operation, consolidatedMessage, savedDataset.Key, requestData)
+		c.IndentedJSON(http.StatusInternalServerError, model.ErrorResponse{Message: "Can't update data."})
+		return
+	}
+	if operation == "" {
+		operation = savedDataset.Operation
+	}
+	response := model.TopSecretSplitPOSTResponse{Operation: operation}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func validateSatelliteInfoRequestData(requestData model.SatelliteInfoRequest) (isValid bool, validationErrors string) {
+	isValid = false
+	validationErrors = ""
+	if store.GetSatelliteInfoIndex(requestData.Name) == -1 {
+		validationErrors += fmt.Sprintf("Not exists satellite reference data for '%s'", requestData.Name)
+	}
+	isValid = true
+	return
+}
+
+// @BasePath /
+// @Summary Recibe el token correspondiente a la operacion de colleccion de datos de distancias y mensajes enviados a /TopSecretSplit/ previamente.
+// @Description Recibe el token de operacion y con el set de datos previamente recolectado basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.
+// @Param operation path string true "El token de operacion"
+// @Produce json
+// @Failure 404 {object} model.ErrorResponse
+// @Success 200 {object} model.TopSecretResponse
+// @Router /topsecret_split/{operation} [GET]
+func TopSecretSplitGETHandler(c *gin.Context) {
+	// get operation token
+	operation := c.Param("operation")
+
+	if operation == "" {
+		resErr := model.ErrorResponse{Message: "operation token required"}
+		c.IndentedJSON(http.StatusNotFound, resErr)
+	}
+
+	// get dataset directly by operation
+	dataset := store.GetDatasetByKey(operation)
+	if dataset.Key == "" || dataset.Key != operation {
+		resErr := model.ErrorResponse{Message: "Insufficient information"}
+		c.IndentedJSON(http.StatusNotFound, resErr)
+		return
+	}
+
+	// performs calculations, checks and response data
+	DoCalculationsAndResponse("TopSecretSplitGETHandler", dataset.Satellites, c)
 }

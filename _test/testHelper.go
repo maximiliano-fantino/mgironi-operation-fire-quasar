@@ -4,8 +4,10 @@ import (
 	"math"
 	"os"
 
+	"github.com/gomodule/redigo/redis"
 	"github.com/mgironi/operation-fire-quasar/model"
 	"github.com/mgironi/operation-fire-quasar/store"
+	"github.com/rafaeljusto/redigomock"
 )
 
 func AreFloats32Equals(a float32, b float32) bool {
@@ -24,4 +26,12 @@ func CleanSatelitesInfoEnvs() {
 	for _, key := range envs {
 		os.Unsetenv(key)
 	}
+}
+
+func InitRedisMockConnection() *redigomock.Conn {
+	conn := redigomock.NewConn()
+	store.GetRedisConnection = func() redis.Conn {
+		return conn
+	}
+	return conn
 }

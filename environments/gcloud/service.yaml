@@ -4,6 +4,14 @@ metadata:
   name: operation-fire-quasar-srv
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/vpc-access-connector: cloudrun-connector
     spec:
       containers:
       - image: gcr.io/mlchallenge-338620/github.com/mgironi/operation-fire-quasar:latest
+        env:
+        - name: REDISHOST
+          value: "10.217.95.115"
+        - name: REDISPORT
+          value: "6379"

@@ -28,12 +28,13 @@ func isAskingToRunAsWebServer() (isAsking bool) {
 }
 
 func RunAsWebServer() {
-	// initialize web server
-	web.InitializeServer()
+	log.Print("starting server...")
 
 	// initialices the store (in memory)
 	store.Initialize()
 
+	// initialize web server
+	web.InitializeServer()
 }
 
 func RunAsSimpleCmdExecution() {

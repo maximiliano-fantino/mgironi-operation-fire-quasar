@@ -1,4 +1,11 @@
 definitions:
+  model.CoordinatesResponse:
+    properties:
+      x:
+        type: number
+      "y":
+        type: number
+    type: object
   model.ErrorResponse:
     properties:
       error:
@@ -31,6 +38,37 @@ definitions:
           $ref: '#/definitions/model.SatelliteInfoRequest'
         type: array
     type: object
+  model.TopSecretResponse:
+    properties:
+      message:
+        type: string
+      position:
+        $ref: '#/definitions/model.CoordinatesResponse'
+    type: object
+  model.TopSecretSplitPOSTResponse:
+    properties:
+      operation:
+        type: string
+    type: object
+  model.TopSecretSplitRequest:
+    properties:
+      distance:
+        example: 100.23
+        type: number
+      message:
+        example:
+        - ""
+        - is
+        - a
+        - ""
+        - message
+        items:
+          type: string
+        type: array
+      name:
+        example: kenobi
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -54,7 +92,7 @@ paths:
       description: Basado en las distancias y mensajes que se reciben de cada satelite,
         se obtienen la posicion y el mensaje emitido.
       parameters:
-      - description: The disantes and messages recieved from each satellite
+      - description: Las distancias y mensajes recibidos por los satelites
         in: body
         name: Body
         required: true
@@ -71,5 +109,57 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Obtiene la ubicación de la nave y el mensaje que emite.
+      summary: Obtiene la ubicacion de la nave y el mensaje que emite.
+  /topsecret_split/{operation}:
+    get:
+      description: Recibe el token de operacion y con el set de datos previamente
+        recolectado basado en las distancias y mensajes que se reciben de cada satelite,
+        se obtienen la posicion y el mensaje emitido.
+      parameters:
+      - description: El token de operacion
+        in: path
+        name: operation
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TopSecretResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recibe el token correspondiente a la operacion de colleccion de datos
+        de distancias y mensajes enviados a /TopSecretSplit/ previamente.
+    post:
+      consumes:
+      - application/json
+      description: Recibe la distancia y mensaje que recibe un satelite y devuelve
+        el token de operacion para posterior tratamiento.
+      parameters:
+      - description: El token de operacion
+        in: path
+        name: operation
+        type: string
+      - description: La distancia y el mensaje recibido por un satelite
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/model.TopSecretSplitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TopSecretSplitPOSTResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recibe la distancia de la nave y el mensaje que recibido por un satelite.
 swagger: "2.0"

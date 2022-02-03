@@ -89,25 +89,24 @@ Tambien es posible ejecutar una prueba directa al servicio desplegado usando el 
 
 # descripción de las rincipales funciones del programa
  
-. calculo para determinación de la ubicación
+## calculo para determinación de la ubicación
  
 Para poder determinar la ubicación y considerando que se cuenta con las distancias a tres puntos cuyas coordenadas son conocidas se aplica el método matemático de trilateración. El mismo se describe como la intersección de tres esferas con centro en los puntos conocidos y de radios la distancia a cada uno. En este caso particularmente solo se cuentan con dos dimensiones con lo que en lugar de esferas se opera con circunferencias. Adicionalmente, los puntos conocidos no se encuentran alineados en un mismo eje (almenos dos) por la tanto es necesario realizar una rotación de los ejes (aparte de la traslación que propone propia el método). De esta forma se puede prevenir un error de cálculo
  
-. armado del mensaje emitido
+## armado del mensaje emitido
+[TBC]
+
  
- 
- 
-. tratamiento de llamadas por partes *split*
- 
- o
+## tratamiento de llamadas por partes *split*
+[TBC]
  
 # algunos comandos docker para uso en el ambiente local
 
-. Construccion de imagen docker con tag 
+## Construccion de imagen docker con tag 
     
     $ docker build . --tag operation-fire-quasar:1.0.0
 
-. Ejecutacion de la app standalone
+## Ejecutacion de la app standalone
     
     $ docker run -it --rm con docker (-p 8080:3001 --name operation-fire-quasar-running operation-fire-quasar:1.0.0
 
@@ -115,14 +114,34 @@ Para poder determinar la ubicación y considerando que se cuenta con las distanc
 
 se debe acceder a 'environments/local'
 
-    . Cosntruccion de la imagen docker
+## Cosntruccion de la imagen docker
         
-        $ docker-compose build
+    $ docker-compose build
 
-    . Inicializacion de la instancia
+## Inicializacion de la instancia
         
-        $ docker-compose up
+    $ docker-compose up
 
-    . Desmontaje de la instancia
+## Desmontaje de la instancia
         
-        $ docker-compose down
+    $ docker-compose down
+
+## starts a redis-server (standalone)
+    
+    $ docker run --name some-redis -d redis:6.0-alpine redis-server --save 60 1 --loglevel warning
+
+## Connect to local redis (standalone), to use redis-cli from console
+    
+    $ docker network create redis-ntk
+    $ docker network connect redis-ntk some-redis
+    $ docker run -it --network redis-ntk --rm redis:6.0-alpine redis-cli -h some-redis
+
+## clean docker volumes
+    
+    $ docker volume ls
+    $ docker volume rm VOLUME-NAME
+
+## Starts app and redis with docker-compose
+    
+    $ docker-compose up
+    $ docker-compose down

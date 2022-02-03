@@ -4,7 +4,11 @@ go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.7
+	github.com/gomodule/redigo v1.8.8
+	github.com/google/uuid v1.3.0
 	github.com/montanaflynn/stats v0.6.6
+	github.com/paul-mannino/go-fuzzywuzzy v0.0.0-20200127021948-54652b135d0e
+	github.com/rafaeljusto/redigomock v2.4.0+incompatible
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.4.0
 	github.com/swaggo/swag v1.7.8

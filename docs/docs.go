@@ -52,10 +52,10 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Obtiene la ubicación de la nave y el mensaje que emite.",
+                "summary": "Obtiene la ubicacion de la nave y el mensaje que emite.",
                 "parameters": [
                     {
-                        "description": "The disantes and messages recieved from each satellite",
+                        "description": "Las distancias y mensajes recibidos por los satelites",
                         "name": "Body",
                         "in": "body",
                         "required": true,
@@ -79,9 +79,93 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/topsecret_split/{operation}": {
+            "get": {
+                "description": "Recibe el token de operacion y con el set de datos previamente recolectado basado en las distancias y mensajes que se reciben de cada satelite, se obtienen la posicion y el mensaje emitido.",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Recibe el token correspondiente a la operacion de colleccion de datos de distancias y mensajes enviados a /TopSecretSplit/ previamente.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "El token de operacion",
+                        "name": "operation",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TopSecretResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Recibe la distancia y mensaje que recibe un satelite y devuelve el token de operacion para posterior tratamiento.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Recibe la distancia de la nave y el mensaje que recibido por un satelite.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "El token de operacion",
+                        "name": "operation",
+                        "in": "path"
+                    },
+                    {
+                        "description": "La distancia y el mensaje recibido por un satelite",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.TopSecretSplitRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TopSecretSplitPOSTResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "model.CoordinatesResponse": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                }
+            }
+        },
         "model.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -125,6 +209,51 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/model.SatelliteInfoRequest"
                     }
+                }
+            }
+        },
+        "model.TopSecretResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "position": {
+                    "$ref": "#/definitions/model.CoordinatesResponse"
+                }
+            }
+        },
+        "model.TopSecretSplitPOSTResponse": {
+            "type": "object",
+            "properties": {
+                "operation": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TopSecretSplitRequest": {
+            "type": "object",
+            "properties": {
+                "distance": {
+                    "type": "number",
+                    "example": 100.23
+                },
+                "message": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "",
+                        "is",
+                        "a",
+                        "",
+                        "message"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "kenobi"
                 }
             }
         }

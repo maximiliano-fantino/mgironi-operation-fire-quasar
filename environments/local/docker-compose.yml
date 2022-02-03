@@ -1,8 +1,22 @@
 version: "3.0"
 services:
+    redis:
+        image: redis:6.0-alpine
+        command: redis-server --save 60 1 --loglevel warning
+        ports:
+            - "6379:6379"
+        volumes:
+            - redisDataVolume:/data
+
     app:
         build: ../../.
         environment:
             - PORT=8080
+            - REDISHOST=redis
+            - REDISPORT=6379
         ports:
             - "9090:8080"
+        links:
+            - redis
+volumes:
+    redisDataVolume: {} 

@@ -1,0 +1,10 @@
+*.out
+
+# config envs folder
+environments
+
+
+.vscode
+
+# binary
+operation-fire-quasar

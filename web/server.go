@@ -18,16 +18,14 @@ func InitializeServer() {
 	router.SetTrustedProxies(nil)
 	router.GET("/ping", PingHandler)
 	router.POST("/topsecret/", TopSecretHandler)
+	router.POST("/topsecret_split/:operation", TopSecretSplitPOSTHandler)
+	router.GET("/topsecret_split/:operation", TopSecretSplitGETHandler)
 
 	// swagger index
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Determine port for HTTP service.
 	port := support.WebServerPort()
-	if port == "" {
-		port = "8080"
-		log.Printf("defaulting to port %s", port)
-	}
 
 	// Start HTTP server.
 	log.Printf("listening on port %s", port)
