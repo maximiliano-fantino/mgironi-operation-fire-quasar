@@ -6,19 +6,19 @@ El programa retorna la fuente y contenido del mensaje de auxilio. El mismo puede
 
 # stack tecnologico
 
-El proyecto esta implementado en *Golang* 1.17.
+. El proyecto esta implementado en *Golang* 1.17.
 
-El framework web HTTP usado es *Gin (https://github.com/gin-gonic/gin)*.
+. El framework web HTTP usado es *Gin (https://github.com/gin-gonic/gin)*.
 
-Para almacenamiento temporal de las peticiones por partes (split) se utiliza Redis
+. Para almacenamiento temporal de las peticiones por partes (split) se utiliza Redis
 
-Las pruebas unitarias se implementaron con las bibliotecas *testing*, *net/http/httptest* y *redigomock* según se necesita en cada caso.
+. Las pruebas unitarias se implementaron con las bibliotecas *testing*, *net/http/httptest* y *redigomock* según se necesita en cada caso.
 
-Tanto para el entorno de desarrollo como de despliegue se usa *linux/unix*.
+. Tanto para el entorno de desarrollo como de despliegue se usa *linux/unix*.
 
-Para el entorno local se puede usar (aparte de las tools propias de go) el Dockerfile para permitir el build de la imagen local y tambien docker-compose (en modo servidor web). La imagen de docker generada es similar la misma que se utiliza en el despliegue en entorno del proveedor cloud elegido. 
+. Para el entorno local se puede usar (aparte de las tools propias de go) el Dockerfile para permitir el build de la imagen local y tambien docker-compose (en modo servidor web). La imagen de docker generada es similar la misma que se utiliza en el despliegue en entorno del proveedor cloud elegido. 
 
-La solucion cloud que se uso para disponibilizar el servicio es *Google Run* de Google Cloud Platform, como también servicios adicionales para facilitar el build y el despliegue del mismo proveedor. El servicio operation-fire-quasar esta conectado/configurado con el repositorio de github para hacer el build y deploy automatico, segun los eventos configurados. Ver el siguiente diagrama orientativo
+. La solucion cloud que se uso para disponibilizar el servicio es *Google Run* de Google Cloud Platform, como también servicios adicionales para facilitar el build y el despliegue del mismo proveedor. El servicio operation-fire-quasar esta conectado/configurado con el repositorio de github para hacer el build y deploy automatico, segun los eventos configurados. Ver el siguiente diagrama orientativo
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/40694446/151864237-12bb0fb8-32c0-4fbc-bb28-a0e3b4e3dbda.png"
@@ -32,6 +32,44 @@ La docuemntacion de uso de la api rest (ejecucion en modo servidor web) esta doc
 
 La documenatcion de uso del programa comando (ejecucion en modo programa comando) se encuentra disponible como menu de ayuda del programa. Es accesible a traves del parametro '-h' o 'help'
 
+# principales funciones del programa
+ 
+## calculo para determinación de la ubicación
+ 
+Para poder determinar la ubicación y considerando que se cuenta con las distancias a tres puntos cuyas coordenadas son conocidas se aplica el método matemático de trilateración. El mismo se describe como la intersección de tres esferas con centro en los puntos conocidos y de radios la distancia a cada uno. En este caso particularmente solo se cuentan con dos dimensiones con lo que en lugar de esferas se opera con circunferencias. Adicionalmente, los puntos conocidos no se encuentran alineados en un mismo eje (almenos dos) por la tanto es necesario realizar una rotación de los ejes (aparte de la traslación que propone propia el método). De esta forma se puede prevenir un error de cálculo
+ 
+## armado del mensaje emitido
+
+El mesnaje emitido,el cual es recibido en partes (una por cada satelite) se trata de la siguiente manera:
+1. Se verifica cual de los mesnajes tiene mas palabras. Dado que se reciben areglos de strings y si una palabra es faltante se mantiene la posicion.
+2. En caso de encontrar que alguno de los mensajes es mas corto se (tiene menos palabras) se lo completa (exclusivamente al inicio) con nuevas posciones de cadena vacia.
+3. Se realiza una iteracion tomando las palabras de cada mensaje, las que no estan vacias y verificando que las palabras en cada posicion no sean distintas (exceptuando la cadena vacia)
+4. Se toma el arreglo resultante como arreglo dle mensaje completo. 
+
+## tratamiento de llamadas por partes *split*
+
+Para recibir los datos de cada satelite por separado se dispone de los siguientes dos endpoints. Uno recibe la informacion de los satelites y el otro permite obtener el resultado del calculo que previamente fue recolectado de a partes. Y son los siguientes:
+
+. POST /topsecret_split/\[operation\]
+. GET /topsecret_split/{operation}
+
+### POST /topsecret_split/\[operation\]
+
+Recibe el dato de un satelite y retorna el codigo de operacion para poder seguir enviando datos de los resto de los satelites. El paramtero \[operation\] es opcional dado que se dispone de un mecanismo deteccion a traves de la porcion del mensaje en caso de que no se cuente con el codigo de operacion. Asi mismo, al enviar el primer dato de un satelite el codigo de operacion se genera y es devuelto.
+Es prefrible la utilizacion de codigo de operacion para los subsiguientes envios de datos hasta completar el total de satelites requerido.
+
+### GET /topsecret_split/{operation}
+
+Retorna los resultados del calculo siempre que se hallan completado los datos de los satelites.
+
+A continuacion se presenta un diagrama de actividad para resumir la combinacion de ambos endpoints 
+
+![topsecret-topsecret_split](https://user-images.githubusercontent.com/40694446/152417245-3c776296-d694-4808-82ea-61126ee4291c.png)
+
+Para mas detalles sobre las llamadas a la api ver .. https://operation-fire-quasar-srv-lr7wlwx33q-ue.a.run.app/swagger/index.html 
+
+---
+ 
 # ejecucion en modo programa comando
 
 El programa puede ser ejecutado en modo programa comando (luego de haber sido instalado), o en su defecto con go run. El mismo devuelve en consola el resultado de los calculos. 
@@ -87,42 +125,7 @@ Tambien es posible ejecutar una prueba directa al servicio desplegado usando el 
 
     $ curl -X POST -H "Content-Type: application/json" -d @_test/topSecret_test1_request.json https://operation-fire-quasar-srv-lr7wlwx33q-ue.a.run.app/topsecret/
 
-
-# descripción de las rincipales funciones del programa
- 
-## calculo para determinación de la ubicación
- 
-Para poder determinar la ubicación y considerando que se cuenta con las distancias a tres puntos cuyas coordenadas son conocidas se aplica el método matemático de trilateración. El mismo se describe como la intersección de tres esferas con centro en los puntos conocidos y de radios la distancia a cada uno. En este caso particularmente solo se cuentan con dos dimensiones con lo que en lugar de esferas se opera con circunferencias. Adicionalmente, los puntos conocidos no se encuentran alineados en un mismo eje (almenos dos) por la tanto es necesario realizar una rotación de los ejes (aparte de la traslación que propone propia el método). De esta forma se puede prevenir un error de cálculo
- 
-## armado del mensaje emitido
-
-El mesnaje emitido,el cual es recibido en partes (una por cada satelite) se trata de la siguiente manera:
-1. Se verifica cual de los mesnajes tiene mas palabras. Dado que se reciben areglos de strings y si una palabra es faltante se mantiene la posicion.
-2. En caso de encontrar que alguno de los mensajes es mas corto se (tiene menos palabras) se lo completa (exclusivamente al inicio) con nuevas posciones de cadena vacia.
-3. Se realiza una iteracion tomando las palabras de cada mensaje, las que no estan vacias y verificando que las palabras en cada posicion no sean distintas (exceptuando la cadena vacia)
-4. Se toma el arreglo resultante como arreglo dle mensaje completo. 
-
-## tratamiento de llamadas por partes *split*
-
-Para recibir los datos de cada satelite por separado se dispone de los siguientes dos endpoints. Uno recibe la informacion de los satelites y el otro permite obtener el resultado del calculo que previamente fue recolectado de a partes. Y son los siguientes:
-
-. POST /topsecret_split/\[operation\]
-. GET /topsecret_split/{operation}
-
-### POST /topsecret_split/\[operation\]
-
-Recibe el dato de un satelite y retorna el codigo de operacion para poder seguir enviando datos de los resto de los satelites. El paramtero \[operation\] es opcional dado que se dispone de un mecanismo deteccion a traves de la porcion del mensaje en caso de que no se cuente con el codigo de operacion. Asi mismo, al enviar el primer dato de un satelite el codigo de operacion se genera y es devuelto.
-Es prefrible la utilizacion de codigo de operacion para los subsiguientes envios de datos hasta completar el total de satelites requerido.
-
-### GET /topsecret_split/{operation}
-
-Retorna los resultados del calculo siempre que se hallan completado los datos de los satelites.
-
-Para mas detalles sobre las llamadas a la api ver .. https://operation-fire-quasar-srv-lr7wlwx33q-ue.a.run.app/swagger/index.html 
-
-A continuacion se presenta un diagrama de actividad para resumir la combinacion de ambos endpoints 
-
-
+----
 
 # algunos comandos docker para uso en el ambiente local
 
