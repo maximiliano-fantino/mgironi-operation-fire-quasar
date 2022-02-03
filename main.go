@@ -44,7 +44,7 @@ func RunAsSimpleCmdExecution() {
 	}
 
 	// initialices the store (in memory)
-	store.Initialize()
+	store.InitializeCmd()
 
 	// parse
 	distances, messages, parseErr := ParseArgs()

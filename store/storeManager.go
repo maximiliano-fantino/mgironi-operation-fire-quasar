@@ -33,6 +33,12 @@ var GetRedisConnection = func() redis.Conn {
 	return redisPool.Get()
 }
 
+func InitializeCmd() {
+
+	// the satelites info
+	InitializeSatelitesInfo()
+}
+
 // Initialices in memory store
 func Initialize() {
 

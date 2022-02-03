@@ -17,7 +17,7 @@ const HELP_PASING_DISTANCES_ARG_EXAMPLE = "-distances=100,200.65,-300.47"
 const HELP_PASING_DISTANCES_ARG = "Required ordered list of distances to each satelite Kenobi,Skywalker,Sato.\n\t\tPlease use keyword 'distances' with '=' and coma ',' as list separator values.\n\t\texample: cmd " + HELP_PASING_DISTANCES_ARG_EXAMPLE
 
 // Help example to passing messages as a program argument
-const HELP_PASING_MESSAGES_ARG_EXAMPLE = "-message=this..the.complete.message,.is.the..message,.is...message"
+const HELP_PASING_MESSAGES_ARG_EXAMPLE = "-messages=this..the.complete.message,.is.the..message,.is...message"
 
 // Help message for passing messages as a program argument
 const HELP_PASING_MESSAGES_ARG = "Required list of messages transmited to each satelite Kenobi,Skywalker,Sato.\n\t\tPlease use keyword 'messages' with '=' and coma ',' as list separator values.\n\t\tAlso use '.' to word separator (don't use empty spaces just '.' instead)\n\t\texample: cmd " + HELP_PASING_MESSAGES_ARG_EXAMPLE
